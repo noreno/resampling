@@ -1,4 +1,5 @@
 # resampling
+
 This project covers the following resampling algorithms:
 - Residual resampling (RR)
 - Systematic resampling (SR)
