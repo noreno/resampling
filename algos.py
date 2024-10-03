@@ -32,47 +32,6 @@ from scipy import stats
 from time import process_time_ns
 
 ##############################################################
-#                  Conversion algorithms                     #
-##############################################################
-
-# Convert vector of replication factors to index vector (curde method)
-def indexvector(r, Nin):
-    iv = np.zeros(np.sum(r), dtype=int)
-    k = 0
-    b = iv.copy()
-    a = iv.copy()
-    c = iv.copy()
-    d = iv.copy()
-    for n in np.arange(len(r)):
-        if r[n] > 0:
-            d[k] = n + 1
-            if k == 0:
-                a[k] = r[n]
-            else:
-                a[k] = a[k-1] + r[n]
-            b[a[k] - r[n]] = 1
-            k = k + 1
-    c[0] = b[0] - 1
-    iv[0] = d[c[0]]
-    for n in np.arange(1, np.sum(r)):
-        c[n] = c[n - 1] + b[n]
-        iv[n] = d[c[n]]
-    return iv
-
-# Convert vector of replication factors to index vector (vectorized method)
-def indexvector_vec(r, Nin):
-    t = r > 0
-    a = np.cumsum(r[t])
-    b = np.zeros(a[-1], dtype=int)
-    b[a - r[t]] = 1
-    temp = np.arange(1, Nin + 1)[t]
-    return temp[np.cumsum(b) - 1]
-
-# Convert index vector to vector of replication factors (vectorized method)
-def repvector_vec(iv, Nin):
-    return np.bincount(iv - 1, minlength=Nin)
-
-##############################################################
 #         Resampling algorithms   -   standard form          #
 ##############################################################
 
@@ -172,6 +131,47 @@ def rr_vec(w, Nin, Nout, u):
     return r
 
 ##############################################################
+#                  Conversion algorithms                     #
+##############################################################
+
+# Convert vector of replication factors to index vector (curde method)
+def indexvector(r, Nin):
+    iv = np.zeros(np.sum(r), dtype=int)
+    k = 0
+    b = iv.copy()
+    a = iv.copy()
+    c = iv.copy()
+    d = iv.copy()
+    for n in np.arange(len(r)):
+        if r[n] > 0:
+            d[k] = n + 1
+            if k == 0:
+                a[k] = r[n]
+            else:
+                a[k] = a[k-1] + r[n]
+            b[a[k] - r[n]] = 1
+            k = k + 1
+    c[0] = b[0] - 1
+    iv[0] = d[c[0]]
+    for n in np.arange(1, np.sum(r)):
+        c[n] = c[n - 1] + b[n]
+        iv[n] = d[c[n]]
+    return iv
+
+# Convert vector of replication factors to index vector (vectorized method)
+def indexvector_vec(r, Nin):
+    t = r > 0
+    a = np.cumsum(r[t])
+    b = np.zeros(a[-1], dtype=int)
+    b[a - r[t]] = 1
+    temp = np.arange(1, Nin + 1)[t]
+    return temp[np.cumsum(b) - 1]
+
+# Convert index vector to vector of replication factors (vectorized method)
+def repvector_vec(iv, Nin):
+    return np.bincount(iv - 1, minlength=Nin)
+
+##############################################################
 #                        Main program                        #
 ##############################################################
 
@@ -213,6 +213,5 @@ for i in np.arange(len(df)):
     t = process_time_ns()
     tmp = locals()[df.loc[i, 'Function']](w, Nin, Nout, u)
     df.loc[i, 'Time'] = (process_time_ns() - t) / 10**6
-
 df['Normalized'] = df['Time'] / np.max(df['Time'])
-df['Improvement'] = 1 - df['Normalized']
+df['Improvement'] = 1 / df['Normalized']
